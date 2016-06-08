@@ -1,0 +1,283 @@
+#!/bin/bash
+
+LRED='\033[01;31m'
+GREEN='\033[0;32m'
+LCYAN='\033[1;36m'
+LBLUE='\033[1;34m'
+LPURPLE='\033[0;35m'
+DGRAY='\033[1;30m'
+NC='\033[0m' # No Color
+
+MOUNT_LOCATION=/mnt/gentoo
+TIMEZONE=Asia/Dubai
+
+CFLAGS="-march=haswell -O2 -pipe"
+CPU_FLAGS="aes avx fma3 mmx mmxext popcnt sse sse2 sse3 sse4_1 sse4_2 ssse3"
+USE_FLAGS="X acl bindist mmx sse sse2 -suid -kde -qt4 sna dri pulseaudio alsa dbus"
+MAKE_OPTIONS="-j9"
+
+BIOS_PARTITION=/dev/sda1
+BOOT_PARTITION=/dev/sda2
+SWAP_PARTITION=/dev/sda3
+ROOT_PARTITION=/dev/sda4
+
+ROOT_FS_TYPE=btrfs
+
+STAGE3=stage3/stage3*
+KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo-razer-blade #kernel config file is optimized for the razer blade 14 2015
+
+HOSTNAME="blade"
+
+PACKAGES="sys-fs/btrfs-progs sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils"
+
+message ()
+{
+  echo
+  echo -e " $LBLUE>>> $LRED $@ $NC"
+}
+
+command ()
+{
+  echo -e "$LCYAN$@$NC"
+  $@
+  if [ $? -ne 0 ]; then
+    echo -e "$LREDFailed$NC"
+    exit 1
+  fi
+}
+
+install_gentoo_prep ()
+{
+  #Disk Setup
+  message "Beginning Installation Process"
+  message "Formating Boot Partition"
+  command mkfs.vfat $BOOT_PARTITION
+  message "Formating Swap Partition"
+  command mkswap -f $SWAP_PARTITION
+  command swapon $SWAP_PARTITION
+  message "Formating Root Partition"
+  command mkfs.${ROOT_FS_TYPE} -f $ROOT_PARTITION
+
+  #Mount Disks
+  message "Mounting Root and Boot partitions"
+  command mount -v $ROOT_PARTITION $MOUNT_LOCATION
+  command mkdir -pv ${MOUNT_LOCATION}/boot
+  command mount -v $BOOT_PARTITION ${MOUNT_LOCATION}/boot
+
+  message "Make sure that date and time is set correctly, if it isn't then it can cause problems in the future"
+  command date
+  message "Is the following date correct (y/n)?"
+  read DATE_CORRECT
+  if [ $DATE_CORRECT = "n" ]; then
+    message "Enter the date and time in MMDDhhmmYYYY format"
+    read CORRECTED_DATE
+    command date $CORRECTED_DATE
+  fi
+
+  #Stage3 Tarbal
+  message "Copying stage3 tarball to system"
+  command cp -rv $STAGE3 $MOUNT_LOCATION
+  command cd $MOUNT_LOCATION
+
+  message "Extracting stage3 tarball"
+  command tar xvjpf stage3-*.tar.bz2 --xattrs
+
+  message "Copying configuration files"
+  command mkdir -pv ${MOUNT_LOCATION}/etc
+  command mkdir -pv ${MOUNT_LOCATION}/etc/portage
+
+
+  message "Copying kernel configuration files"
+  command cp -rv $KERNEL_CONFIG_FILE ${MOUNT_LOCATION}/kernel-config
+
+  ##Chroot
+  message "Copying DNS info"
+  command cp -L /etc/resolv.conf ${MOUNT_LOCATION}/etc/
+
+  message "Mounting Necessary Filesystems"
+  command mount -t proc proc /mnt/gentoo/proc
+  command mount --rbind /sys /mnt/gentoo/sys
+  command mount --make-rslave /mnt/gentoo/sys
+  command mount --rbind /dev /mnt/gentoo/dev
+  command mount --make-rslave /mnt/gentoo/dev
+
+  message "Chrooting into System"
+  command chroot $MOUNT_LOCATION /bin/bash -c "install_gentoo_chroot"
+}
+
+install_gentoo_chroot()
+{
+  message "Inside chroot env"
+  command env-update
+  command source /etc/profile
+  command export PS1="(chroot) $PS1"
+
+  command touch /testchrootfile
+  #Portage
+  message "Installing portage snapshot"
+  command emerge-webrsync
+  message "Updating portage tree"
+  command emerge --sync
+
+  message "Configuring /etc/portage/make.conf"
+  cat << EOF > /etc/portage/make.conf
+CFLAGS="${CFLAGS}"
+CXXFLAGS="\${CFLAGS}"
+CPU_FLAGS="$CPU_FLAGS"
+
+# WARNING: Changing your CHOST is not something that should be done lightly.
+# Please consult http://www.gentoo.org/doc/en/change-chost.xml before changing.
+CHOST="x86_64-pc-linux-gnu"
+# These are the USE flags that were used in addition to what is provided by the
+# profile used for building.
+USE="${USE_FLAGS}"
+MAKEOPTS="-j9"
+PORTDIR="/usr/portage"
+DISTDIR="${PORTDIR}/distfiles"
+PKGDIR="${PORTDIR}/packages"
+EOF
+
+  #Installation
+  message "Setting Profile to default/linux/amd64/13.0/desktop "
+  command eselect profile set default/linux/amd64/13.0/desktop
+
+  message "Updating @world set"
+  command emerge --ask --update --deep --newuse @world
+
+  message "Installing filesystem packages"
+  command emerge --ask $PACKAGES
+
+  message "Configuring timezone"
+  command echo "$TIMEZONE" > /etc/timezone
+  command emerge --quiet --config sys-libs/timezone-data
+
+  cat << EOF > /etc/locale.gen
+message "Writing /etc/locale.gen file"
+# All blank lines and lines starting with # are ignored.
+#en_US ISO-8859-1
+ en_US.UTF-8 UTF-8
+#ja_JP.EUC-JP EUC-JP
+ja_JP.UTF-8 UTF-8
+#ja_JP EUC-JP
+#en_HK ISO-8859-1
+#en_PH ISO-8859-1
+#de_DE ISO-8859-1
+#de_DE@euro ISO-8859-15
+#es_MX ISO-8859-1
+#fa_IR UTF-8
+#fr_FR ISO-8859-1
+#fr_FR@euro ISO-8859-15
+#it_IT ISO-8859-1
+EOF
+
+
+  command locale-gen
+  command eselect locale set en_US.utf8
+
+  message "Reloading Environment"
+  command env-update && source /etc/profile && export PS1="(chroot) $PS1"
+
+  message "Downloading Kernel Sources"
+  command emerge --ask sys-kernel/gentoo-sources
+
+  message "Loading kernel configuration file"
+  command mv -v /kernel-config /usr/src/linux/.config-gentoo-final
+  command cp -rv /usr/src/linux/.config-gentoo-final /usr/src/linux/.config
+
+  message "Beginning Kernel Compilation Process"
+  command cd /usr/src/linux/
+  command make clean
+  command make mrproper
+  command make $MAKE_OPTIONS
+  command make modules_install
+  command make install
+
+  message "Removing old kernel files"
+  command rm -rf /boot/*old
+  message "Creating bootx64.efi, (Meant for UEFI systems)"
+  command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
+
+  message "Downloading genkernel-next"
+  command emerge genkernel
+  command mv -v /etc/genkernel-configuration.conf genkernel.conf
+
+  message "Generating initramfs"
+  command genkernel --$ROOT_FS_TYPE --udev --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
+
+  cat << EOF > /etc/fstab
+# /etc/fstab: static file system information.
+#
+# noatime turns off atimes for increased performance (atimes normally aren't
+# needed); notail increases performance of ReiserFS (at the expense of storage
+# efficiency).  It's safe to drop the noatime options if you want and to
+# switch between notail / tail freely.
+#
+# The root filesystem should have a pass number of either 0 or 1.
+# All other filesystems should have a pass number of 0 or greater than 1.
+#
+# See the manpage fstab(5) for more information.
+#
+
+# <fs>                  <mountpoint>    <type>          <opts>          <dump/pass>
+
+# NOTE: If your BOOT partition is ReiserFS, add the notail option to opts.
+${BOOT_PARTITION}               /boot           vfat            noauto,noatime  1 2
+${SWAP_PARTITION}               none            swap            sw              0 0
+${ROOT_PARTITION}               /               btrfs           noatime,ssd,compress=lzo,clear_cache            0 0
+EOF
+
+  message "Setting Hostname"
+  command sed -i "s/localhost/$HOSTNAME/g" /etc/conf.d/hostname
+  message "Creating /etc/conf.d/net"
+  command touch /etc/conf.d/net
+  message "Installing netifrc"
+  command emerge --ask --noreplace net-misc/netifrc
+  message "Setting network interfaces to activate at boot"
+  command cd /etc/init.d
+  command ln -s net.lo net.wlp3s0
+  command rc-update add net.eth0 deafult
+
+  message "Installing tools"
+  command emerge --ask app-admin/sysklogd
+  command rc-update add sysklogd default
+  message "Installing cronie Cron daemon"
+  command emerge --ask sys-process/cronie
+  #rc-update add cronie default
+  message "Installing mlocate for file indexing"
+  command emerge --ask sys-apps/mlocate
+
+  message "Configuring Bootloader"
+  #echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf
+  command emerge --ask sys-boot/grub:2
+  message "Installing grub2"
+  command grub2-install --target=x86_64-efi --efi-directory=/boot
+  command grub2-mkconfig -o /boot/grub/grub.cfg
+
+  message "Base installation has finished but there are still some steps that have to be done"
+}
+
+#exporting necessary functions and variables
+export -f install_gentoo_chroot
+export -f message
+export -f command
+
+export LRED
+export GREEN
+export LCYAN
+export LBLUE
+export LPURPLE
+export DGRAY
+export NC
+
+export TIMEZONE
+export CFLAGS
+export CPU_FLAGS
+export USE_FLAGS
+export MAKE_OPTIONS
+export BIOS_PARTITION
+export BOOT_PARTITION
+export SWAP_PARTITION
+export ROOT_PARTITION
+export MAKE_OPTIONS
+export HOSTNAME
+install_gentoo_prep
