@@ -185,9 +185,6 @@ EOF
   command make clean
   command make mrproper
   
-  message "Removing old kernel files"
-  command rm -rf /boot/*old
-  
   message "Loading kernel configuration file"
   command mv -v /kernel-config /usr/src/linux/.config-gentoo-final
   command cp -rv /usr/src/linux/.config-gentoo-final /usr/src/linux/.config
@@ -197,6 +194,9 @@ EOF
   command make modules_install
   command make install
 
+  message "Removing old kernel files"
+  command rm -rf /boot/*old
+  
   message "Creating bootx64.efi, (Meant for UEFI systems)"
   command mkdir -pv /boot/efi/boot
   command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
