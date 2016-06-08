@@ -201,7 +201,7 @@ EOF
   command mkdir -pv /boot/efi/boot
   command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
 
-  message "Downloading genkernel-next"
+  message "Downloading genkernel"
   command emerge genkernel
   command mv -v /etc/genkernel-configuration.conf genkernel.conf
 
