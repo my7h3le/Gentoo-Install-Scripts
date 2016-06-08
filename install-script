@@ -269,6 +269,7 @@ export LPURPLE
 export DGRAY
 export NC
 
+export PACKAGES
 export TIMEZONE
 export CFLAGS
 export CPU_FLAGS
