@@ -151,8 +151,8 @@ EOF
   command echo "$TIMEZONE" > /etc/timezone
   command emerge --quiet --config sys-libs/timezone-data
 
+  message "Writing /etc/locale.gen file"
   cat << EOF > /etc/locale.gen
-message "Writing /etc/locale.gen file"
 # All blank lines and lines starting with # are ignored.
 #en_US ISO-8859-1
  en_US.UTF-8 UTF-8
