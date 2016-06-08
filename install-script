@@ -180,14 +180,16 @@ EOF
   message "Downloading Kernel Sources"
   command emerge --ask sys-kernel/gentoo-sources
 
+  message "Cleaning Kernel source folder"
+  command cd /usr/src/linux/
+  command make clean
+  command make mrproper
+  
   message "Loading kernel configuration file"
   command mv -v /kernel-config /usr/src/linux/.config-gentoo-final
   command cp -rv /usr/src/linux/.config-gentoo-final /usr/src/linux/.config
 
   message "Beginning Kernel Compilation Process"
-  command cd /usr/src/linux/
-  command make clean
-  command make mrproper
   command make $MAKE_OPTIONS
   command make modules_install
   command make install
