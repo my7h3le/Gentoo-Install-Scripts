@@ -201,11 +201,11 @@ EOF
   command mkdir -pv /boot/efi/boot
   command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
 
-  message "Downloading genkernel"
+  message "Installing genkernel"
   command emerge --ask sys-kernel/genkernel
 
   message "Generating initramfs"
-  command genkernel --${ROOT_FS_TYPE} --udev --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
+  command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
 
   cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
