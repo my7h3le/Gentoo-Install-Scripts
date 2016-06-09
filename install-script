@@ -24,7 +24,7 @@ ROOT_PARTITION=/dev/sda4
 ROOT_FS_TYPE=btrfs
 
 STAGE3=stage3/stage3*
-KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/. 	.config-gentoo #kernel config file is optimized for my particular system you will have to modify it for your system
+KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is optimized for my particular system you will have to modify it for your system
 
 HOSTNAME="gentoo"
 
