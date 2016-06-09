@@ -29,6 +29,7 @@ KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/. 	.config-gentoo #kernel config file i
 HOSTNAME="gentoo"
 
 PACKAGES="sys-fs/btrfs-progs sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils"
+TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate"
 
 message ()
 {
@@ -205,7 +206,7 @@ EOF
   command emerge --ask sys-kernel/genkernel
 
   message "Generating initramfs"
-  command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
+  command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install initramfs
 
   cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
@@ -237,17 +238,11 @@ EOF
   command emerge --ask --noreplace net-misc/netifrc
   message "Setting network interfaces to activate at boot"
   command cd /etc/init.d
-  command ln -s net.lo net.wlp3s0
-  command rc-update add net.eth0 deafult
+  command ln -s net.lo net.eth0
+  command rc-update add net.eth0 default
 
-  message "Installing tools"
-  command emerge --ask app-admin/sysklogd
-  command rc-update add sysklogd default
-  message "Installing cronie Cron daemon"
-  command emerge --ask sys-process/cronie
-  #rc-update add cronie default
-  message "Installing mlocate for file indexing"
-  command emerge --ask sys-apps/mlocate
+  message "Installing tools, cronie, and mlocate for file indexing"
+  command emerge --ask $TOOLS
 
   message "Configuring Bootloader"
   #echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf
@@ -285,4 +280,5 @@ export ROOT_PARTITION
 export ROOT_FS_TYPE
 export MAKE_OPTIONS
 export HOSTNAME
+export TOOLS
 install_gentoo_prep
