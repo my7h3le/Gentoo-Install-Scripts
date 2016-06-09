@@ -206,7 +206,7 @@ EOF
   command emerge --ask sys-kernel/genkernel
 
   message "Generating initramfs"
-  command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install initramfs
+  command genkernel --${ROOT_FS_TYPE} --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --install --no-ramdisk-modules initramfs
 
   cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
