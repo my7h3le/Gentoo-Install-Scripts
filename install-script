@@ -245,7 +245,7 @@ EOF
   command emerge --ask $TOOLS
 
   message "Configuring Bootloader"
-  #echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf
+  echo GRUB_PLATFORMS="efi-64" >> /etc/portage/make.conf #For UEFI users only
   command emerge --ask sys-boot/grub:2
   message "Installing grub2"
   command grub2-install --target=x86_64-efi --efi-directory=/boot
