@@ -113,7 +113,6 @@ install_gentoo_chroot()
   command source /etc/profile
   command export PS1="(chroot) $PS1"
 
-  command touch /testchrootfile
   #Portage
   message "Installing portage snapshot"
   command emerge-webrsync
