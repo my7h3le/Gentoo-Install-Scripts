@@ -202,11 +202,10 @@ EOF
   command cp /boot/vmlinuz-* /boot/efi/boot/bootx64.efi
 
   message "Downloading genkernel"
-  command emerge genkernel
-  command mv -v /etc/genkernel-configuration.conf genkernel.conf
+  command emerge --ask sys-kernel/genkernel
 
   message "Generating initramfs"
-  command genkernel --$ROOT_FS_TYPE --udev --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
+  command genkernel --${ROOT_FS_TYPE} --udev --kerneldir=/usr/src/linux --kernel-config="/usr/src/linux/.config-gentoo-final" --firmware --install initramfs
 
   cat << EOF > /etc/fstab
 # /etc/fstab: static file system information.
@@ -283,6 +282,7 @@ export BIOS_PARTITION
 export BOOT_PARTITION
 export SWAP_PARTITION
 export ROOT_PARTITION
+export ROOT_FS_TYPE
 export MAKE_OPTIONS
 export HOSTNAME
 install_gentoo_prep
