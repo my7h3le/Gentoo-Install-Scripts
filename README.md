@@ -1,5 +1,5 @@
 # Gentoo-Install-Scripts
-An install script to automate setting up a base gentoo system
+An install script to automate setting up a base gentoo system. Note: An ncurses based ui, or a gtk based GUI will be coming.
 
 # Usage
 Download a stage3 tarball from gentoo's website, and place it in the stage3 folder. Boot the gentoo live cd, and clone this repository in the live cd. Then create your partitions, and run the script. 
