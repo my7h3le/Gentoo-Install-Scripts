@@ -1,0 +1,15 @@
+#!/bin/bash
+
+DESTINATION="./stage3"
+
+function stage3Download() {
+	printf "\n"
+	echo -e "\e[33m\xe2\x8f\xb3 Downloading the stage 3 tarball... \e[m"	
+	LATEST=$(wget --quiet http://distfiles.gentoo.org/releases/amd64/autobuilds/latest-stage3-amd64.txt -O-| tail -n 1 | cut -d " " -f 1)
+	BASENAME=$(basename "$LATEST")
+	wget -q --show-progress "http://distfiles.gentoo.org/releases/amd64/autobuilds/$LATEST" -O "$DESTINATION/$BASENAME"
+	BASENAME=$(basename "$STAGE3")
+	wget -q --show-progress "$STAGE3" -O "$DESTINATION/$BASENAME"
+}
+
+stage3Download

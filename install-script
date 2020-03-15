@@ -28,7 +28,7 @@ KERNEL_CONFIG_FILE=$(pwd)/kernel-configs/.config-gentoo #kernel config file is o
 
 HOSTNAME="gentoo"
 
-PACKAGES="sys-fs/btrfs-progs sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils"
+PACKAGES="sys-fs/e2fsprogs sys-fs/dosfstools sys-fs/ntfs3g net-wireless/wpa_supplicant net-wireless/wireless-tools net-misc/dhcpcd app-text/tree sys-apps/pciutils"
 TOOLS="app-admin/sysklogd sys-process/cronie sys-apps/mlocate"
 
 message ()
@@ -280,4 +280,6 @@ export ROOT_FS_TYPE
 export MAKE_OPTIONS
 export HOSTNAME
 export TOOLS
+
+./get-latest-stage3
 install_gentoo_prep
