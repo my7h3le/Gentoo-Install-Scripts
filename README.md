@@ -1,3 +1,6 @@
+# Usage:
+I haven't used Gentoo or touched this repo in a while. I will leave this repo up as an archive though, in case it is useful to anyone else.
+
 # Gentoo-Install-Scripts
 An install script to automate setting up a base gentoo system. Note: An ncurses based ui, or a gtk based GUI will be coming.
 
